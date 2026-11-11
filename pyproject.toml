@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gcp-stockout-guard"
-version = "0.1.0"
-description = "Spot Google Cloud capacity stockouts early from Compute Engine stockout error logs."
+version = "0.2.0"
+description = "Find Google Cloud capacity stockouts in exported Compute Engine logs, rank fallback zones and print a dry-run fallback plan."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
