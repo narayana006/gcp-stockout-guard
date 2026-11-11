@@ -22,3 +22,4 @@ jobs:
       - run: python -m pip install -e . pytest ruff
       - run: ruff check .
       - run: pytest
+      - run: gcp-stockout-guard plan --logs examples/stockout_logs.json --advice examples/advice_capacity_us-central1.json --advice examples/advice_calendar_europe-west4.json --count 20

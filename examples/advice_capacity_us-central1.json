@@ -1,0 +1,56 @@
+[
+  {
+    "recommendations": [
+      {
+        "scores": {
+          "obtainability": 0.7,
+          "estimatedUptime": "14400s"
+        },
+        "shards": [
+          {
+            "zone": "us-central1-b",
+            "machineType": "n2-standard-8",
+            "instanceCount": 20,
+            "provisioningModel": "SPOT"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "recommendations": [
+      {
+        "scores": {
+          "obtainability": 0.9,
+          "estimatedUptime": "21600s"
+        },
+        "shards": [
+          {
+            "zone": "us-central1-c",
+            "machineType": "n2-standard-8",
+            "instanceCount": 20,
+            "provisioningModel": "SPOT"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "recommendations": [
+      {
+        "scores": {
+          "obtainability": 0.4,
+          "estimatedUptime": "5400s"
+        },
+        "shards": [
+          {
+            "zone": "us-central1-f",
+            "machineType": "n2-standard-8",
+            "instanceCount": 20,
+            "provisioningModel": "SPOT"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    {
+      "recommendationsPerSpec": {
+        "gpu-training": {
+          "recommendationId": "00000000-0000-4000-8000-000000000001",
+          "recommendationType": "FUTURE_RESERVATION",
+          "startTime": "2026-12-01T09:00:00Z",
+          "endTime": "2026-12-08T09:00:00Z",
+          "location": "zones/europe-west4-a",
+          "otherLocations": {
+            "zones/europe-west4-b": {
+              "status": "CONDITION_NOT_MET",
+              "details": "No capacity for the requested time window."
+            }
+          }
+        }
+      }
+    }
+  ]
+}

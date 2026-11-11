@@ -1,0 +1,375 @@
+[
+  {
+    "insertId": "e1",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-03T08:15:02Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5001"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-1",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c,us-central1-f"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e2",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-03T08:15:40Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5002"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-2",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c,us-central1-f"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e3",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-04T13:02:11Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5003"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-3",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e4",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-05T09:47:30Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5004"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-4",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c,us-central1-b"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e5",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-06T16:20:05Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-f",
+        "instance_id": "5005"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-f/instances/demo-vm-5",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-f/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-f",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e6",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-07T10:05:00Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5006"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-6",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c,us-central1-f"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e7",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-08T14:31:44Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5007"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-7",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-b,us-central1-c"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "e8",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-06T22:15:00Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "europe-west4-b",
+        "instance_id": "5008"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/europe-west4-b/instances/demo-vm-8",
+      "request": {
+        "machineType": "projects/example-project/zones/europe-west4-b/machineTypes/a2-highgpu-1g"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED"
+      }
+    }
+  },
+  {
+    "insertId": "e9",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-07T22:40:19Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "europe-west4-b",
+        "instance_id": "5009"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/europe-west4-b/instances/demo-vm-9",
+      "request": {
+        "machineType": "projects/example-project/zones/europe-west4-b/machineTypes/a2-highgpu-1g"
+      },
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED"
+      }
+    }
+  },
+  {
+    "insertId": "e10",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-05T11:00:00Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-a",
+        "instance_id": "5010"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/demo-vm-10",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8"
+      },
+      "status": {
+        "code": 8,
+        "message": "QUOTA_EXCEEDED"
+      }
+    }
+  },
+  {
+    "insertId": "e11",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-05T11:05:00Z",
+    "severity": "NOTICE",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {
+        "project_id": "example-project",
+        "zone": "us-central1-c",
+        "instance_id": "5011"
+      }
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-c/instances/demo-vm-11",
+      "request": {
+        "machineType": "projects/example-project/zones/us-central1-c/machineTypes/n2-standard-8"
+      }
+    }
+  }
+]
