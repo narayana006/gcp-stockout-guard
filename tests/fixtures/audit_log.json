@@ -1,0 +1,111 @@
+[
+  {
+    "insertId": "a1",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2026-11-08T14:02:11.123456789Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {"project_id": "example-project", "zone": "us-central1-a", "instance_id": "111"}
+    },
+    "protoPayload": {
+      "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/web-1",
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+            "reason": "resource_availability",
+            "domain": "compute.googleapis.com",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "attachment": "",
+              "zonesAvailable": "us-central1-c,us-central1-f"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "a2",
+    "timestamp": "2026-11-07T09:30:00Z",
+    "severity": "ERROR",
+    "resource": {
+      "type": "gce_instance",
+      "labels": {"project_id": "example-project", "zone": "us-central1-a", "instance_id": "112"}
+    },
+    "protoPayload": {
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-central1-a/instances/web-2",
+      "status": {
+        "code": 8,
+        "message": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+        "details": [
+          {
+            "reason": "resource_availability",
+            "metadatas": {
+              "zone": "us-central1-a",
+              "vmType": "n2-standard-8",
+              "zonesAvailable": "us-central1-c"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "insertId": "a3",
+    "timestamp": "2026-11-06T22:15:42.5Z",
+    "severity": "ERROR",
+    "resource": {"type": "gce_instance", "labels": {"project_id": "example-project"}},
+    "protoPayload": {
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/europe-west4-b/instances/gpu-1",
+      "request": {
+        "machineType": "projects/example-project/zones/europe-west4-b/machineTypes/a2-highgpu-1g"
+      },
+      "status": {
+        "code": 8,
+        "message": "The zone 'projects/example-project/zones/europe-west4-b' does not have enough resources available to fulfill the request. Try a different zone, or try again later."
+      }
+    }
+  },
+  {
+    "insertId": "a4",
+    "timestamp": "2026-11-08T15:00:00Z",
+    "severity": "ERROR",
+    "resource": {"type": "gce_instance", "labels": {"project_id": "example-project"}},
+    "jsonPayload": {
+      "error": {
+        "code": "ZONE_RESOURCE_POOL_EXHAUSTED",
+        "message": "A n2-standard-8 VM instance is currently unavailable in the us-central1-a zone. Alternatively, you can try your request again with a different VM hardware configuration or at a later time."
+      }
+    }
+  },
+  {
+    "insertId": "a5",
+    "timestamp": "2026-11-08T15:05:00Z",
+    "severity": "ERROR",
+    "resource": {"type": "gce_instance", "labels": {"project_id": "example-project", "zone": "us-east1-b"}},
+    "protoPayload": {
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-east1-b/instances/batch-1",
+      "status": {"code": 8, "message": "QUOTA_EXCEEDED"}
+    }
+  },
+  {
+    "insertId": "a6",
+    "timestamp": "2026-11-08T15:06:00Z",
+    "severity": "NOTICE",
+    "resource": {"type": "gce_instance", "labels": {"project_id": "example-project", "zone": "us-east1-b"}},
+    "protoPayload": {
+      "methodName": "v1.compute.instances.insert",
+      "resourceName": "projects/example-project/zones/us-east1-b/instances/batch-2"
+    }
+  }
+]
