@@ -2,7 +2,7 @@
 
 Find out which Google Cloud zones and machine types are running out of capacity, from the stockout errors already sitting in your Compute Engine logs, and get a ranked list of zones to fall back to.
 
-> **Status: early, offline only.** Four commands work today, all on files you export yourself: `stockouts` (count `ZONE_RESOURCE_POOL_EXHAUSTED` errors per zone and machine type), `advice` (summarise saved `advice.capacity` and `advice.calendarMode` responses), `plan` (rank fallback zones and print a fallback plan, with any reservation shown as a dry-run command) and `capacity-request` (print an `advice.capacity` request body). The tool **never calls Google Cloud and never creates a reservation**. Live API calls, reservation automation and alerting are not built; see [Roadmap](#roadmap).
+> **Status: early.** Six commands work today. Four analyse files: `stockouts` (count `ZONE_RESOURCE_POOL_EXHAUSTED` errors per zone and machine type), `advice` (summarise saved `advice.capacity` and `advice.calendarMode` responses), `plan` (rank fallback zones and print a fallback plan, with any reservation shown as a dry-run command) and `capacity-request` (print an `advice.capacity` request body). Two make **read-only** calls to Google Cloud: `fetch-logs` (stockout errors from Cloud Logging) and `fetch-capacity` (Spot advice from `advice.capacity`). The tool **never creates, changes or buys anything, and never creates a reservation**. A live `advice.calendarMode` call, reservation automation and alerting are not built; see [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -55,7 +55,13 @@ Calendar-mode advice (advice.calendarMode, future reservations)
     not recommended: europe-west4-b (CONDITION_NOT_MET) - No capacity for the requested time window.
 ```
 
-With your own project, export the last 7 days of stockout errors with `gcloud` and pipe them in (the tool itself runs nothing; you run the export):
+With your own project, fetch the last 7 days of stockout errors straight from Cloud Logging and pipe them into `plan` (needs `gcloud auth login` or an access token; see [Live, read-only fetches](#live-read-only-fetches)):
+
+```bash
+gcp-stockout-guard fetch-logs --project my-project --days 7 | gcp-stockout-guard plan --logs -
+```
+
+Or export the logs yourself with `gcloud` and pipe them in the same way:
 
 ```bash
 gcloud logging read '"ZONE_RESOURCE_POOL_EXHAUSTED"' --project my-project --freshness=7d --format=json | gcp-stockout-guard plan --logs -
@@ -69,7 +75,7 @@ This tool is for SRE and platform teams running workloads on Compute Engine or G
 
 ## Commands
 
-Every command reads files or standard input and prints text (or JSON with `--format json`). Exit status is 0 on success and 2 when an input cannot be read or understood.
+The analysis commands read files or standard input and print text (or JSON with `--format json`). The `fetch-*` commands call Google Cloud read-only and print JSON. Exit status is 0 on success and 2 when an input cannot be read or understood or a live call fails.
 
 ### `stockouts`: what ran out, and where
 
@@ -181,6 +187,33 @@ gcp-stockout-guard capacity-request --machine-type n2-standard-8 --count 20 --zo
 
 This prints the body and sends nothing. The method is `POST https://compute.googleapis.com/compute/beta/projects/PROJECT/regions/REGION/advice/capacity` and needs the `compute.advice.capacity` permission; send the body with your own authenticated client and save the response for `advice` and `plan`.
 
+### Live, read-only fetches
+
+```
+gcp-stockout-guard fetch-logs --project ID [--days N] [--max-entries N]
+gcp-stockout-guard fetch-capacity --project ID [--region REGION] --machine-type TYPE [--machine-type TYPE ...] --count N [--zone ZONE ...] [--target-shape ANY|ANY_SINGLE_ZONE|BALANCED]
+```
+
+Both print the raw JSON so you can pipe it on or save it:
+
+```bash
+gcp-stockout-guard fetch-logs --project my-project --days 3 > stockouts.json
+gcp-stockout-guard fetch-capacity --project my-project --machine-type n2-standard-8 --count 20 --zone us-central1-c > advice-c.json
+gcp-stockout-guard plan --logs stockouts.json --advice advice-c.json --count 20
+```
+
+| Command | Call made | Permission needed |
+| --- | --- | --- |
+| `fetch-logs` | `POST https://logging.googleapis.com/v2/entries:list`, newest first, following pages up to `--max-entries` (default 5000) | `logging.logEntries.list` (for example Logs Viewer) |
+| `fetch-capacity` | `POST https://compute.googleapis.com/compute/beta/projects/ID/regions/REGION/advice/capacity` with the same body `capacity-request` prints | `compute.advice.capacity` |
+
+- **Logs filter.** `fetch-logs` asks for entries containing `"ZONE_RESOURCE_POOL_EXHAUSTED"` or "does not have enough resources available to fulfill the request" with a timestamp in the last `--days` days (default 7).
+- **Region.** `fetch-capacity` uses `--region`, or works it out from `--zone` when all zones are in one region; otherwise it stops with an error.
+- **Credentials.** The access token comes from the `GOOGLE_OAUTH_ACCESS_TOKEN` environment variable if set, otherwise from `gcloud auth print-access-token`. Nothing is stored.
+- **Errors.** An HTTP error is shown with Google's message (for example `HTTP 403: Permission denied`) and exit status 2.
+
+Both calls only read: `entries:list` reads logs and `advice.capacity` returns advice without reserving anything. They are tested against a fake transport, not recorded from a live project, so please open an issue if a real response is handled wrongly.
+
 ## What Google's APIs can and cannot tell you
 
 - **Spot VMs:** `advice.capacity` (Capacity Advisor) returns an obtainability score from 0.0 to 1.0 and an estimated uptime before preemption. It covers Spot VMs only and is in beta. Google describes the uptime as a best-effort estimate from historical data.
@@ -191,7 +224,7 @@ That is why the plan treats Spot obtainability as one hint among others. A high 
 
 ## Limitations
 
-- Offline only. You export logs and save advice responses; the tool does not fetch them.
+- Live fetching covers Cloud Logging and `advice.capacity` only. For `advice.calendarMode` you still send the request yourself and save the response.
 - Stockout detection is after the fact. It tells you where stockouts have already happened.
 - The advice files in `examples/` are **illustrative**: written by hand from the field names in Google's public REST reference, not recorded from a real project. The parser has not been run against live responses, and `advice.capacity` is a beta method whose shape may change. The log parser is likewise tested against sample entries modelled on Compute Engine audit logs. If something of yours is parsed wrongly or shows up as `unknown`, please open an issue with a redacted copy.
 - The ranking only knows zones that appear in your logs or advice files. A zone nobody mentioned is not ranked, however much capacity it has.
@@ -207,7 +240,8 @@ Unticked items are not built yet.
 - [x] GPU, TPU and H4D check: recommended zone and time window, read from saved `advice.calendarMode` responses
 - [x] Stockout report: which machine types and zones are at risk, with ranked zones to move to (`plan`)
 - [x] Reservation step printed as a dry-run command only
-- [ ] Live calls to `advice.capacity`, `advice.calendarMode` and Cloud Logging, so nothing has to be exported by hand
+- [x] Live, read-only calls to Cloud Logging (`fetch-logs`) and `advice.capacity` (`fetch-capacity`), so logs and Spot advice no longer have to be exported by hand
+- [ ] Live call to `advice.calendarMode`
 - [ ] Reservation plan: compares running VMs and autoscaler maximums with existing reservations and lists the gaps
 - [ ] Reservation automation from a YAML policy: creates on-demand reservations and calendar-mode future reservation requests, dry-run by default, real purchases behind an explicit flag and a spend limit you set
 - [ ] Flags unused and DEGRADED reservations so you stop paying for capacity you cannot use
@@ -227,7 +261,7 @@ ruff check .
 pytest
 ```
 
-Tests use fixture files only; they need no credentials and no network.
+Tests use fixture files and a fake HTTP transport; they need no credentials and no network.
 
 ## Contributing
 

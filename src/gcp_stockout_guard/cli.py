@@ -10,6 +10,7 @@ from typing import TextIO
 
 from . import __version__
 from .advice import Advice, AdviceFormatError, build_capacity_request, load_advice
+from .live import LiveClient, LiveError, region_of
 from .plan import (
     advice_payload,
     build_plan,
@@ -40,7 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="gcp-stockout-guard",
         description=(
             "Spot Google Cloud capacity stockouts from Compute Engine error logs and saved "
-            "capacity advice. Reads files only; never calls Google Cloud."
+            "capacity advice. Analysis commands read files only; the fetch-* commands make "
+            "read-only calls to Google Cloud. Nothing creates, changes or buys any resource."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -125,6 +127,43 @@ def build_parser() -> argparse.ArgumentParser:
     request.add_argument(
         "--target-shape", choices=("ANY", "ANY_SINGLE_ZONE", "BALANCED"), help="distribution shape"
     )
+
+    fetch_logs = commands.add_parser(
+        "fetch-logs",
+        help="read stockout errors from Cloud Logging (read-only) and print them as JSON",
+        description=(
+            "Call Cloud Logging entries:list for stockout errors in one project and print the "
+            "entries as a JSON list, ready for `stockouts -` or `plan --logs -`."
+        ),
+    )
+    fetch_logs.add_argument("--project", required=True, help="project ID to read logs from")
+    fetch_logs.add_argument(
+        "--days", type=float, default=7, help="how far back to look (default: 7)"
+    )
+    fetch_logs.add_argument(
+        "--max-entries", type=int, default=5000, metavar="N", help="stop after N entries"
+    )
+
+    fetch_capacity = commands.add_parser(
+        "fetch-capacity",
+        help="call advice.capacity (beta, Spot VMs only, read-only) and print the response",
+        description=(
+            "Send an advice.capacity request and print the JSON response, ready to save for "
+            "the `advice` and `plan` commands."
+        ),
+    )
+    fetch_capacity.add_argument("--project", required=True, help="project ID")
+    fetch_capacity.add_argument("--region", help="region; derived from --zone when omitted")
+    fetch_capacity.add_argument(
+        "--machine-type", action="append", required=True, help="machine type; repeat for several"
+    )
+    fetch_capacity.add_argument(
+        "--count", type=int, required=True, metavar="N", help="number of VMs"
+    )
+    fetch_capacity.add_argument("--zone", action="append", default=[], help="limit to this zone")
+    fetch_capacity.add_argument(
+        "--target-shape", choices=("ANY", "ANY_SINGLE_ZONE", "BALANCED"), help="distribution shape"
+    )
     return parser
 
 
@@ -157,7 +196,33 @@ def _load_advice(paths: Sequence[str], stdin: TextIO) -> Advice:
     return merged
 
 
-def _run(args: argparse.Namespace, stdin: TextIO, stdout: TextIO) -> int:
+def _run(
+    args: argparse.Namespace, stdin: TextIO, stdout: TextIO, client: LiveClient | None
+) -> int:
+    if args.command == "fetch-logs":
+        try:
+            entries = (client or LiveClient()).fetch_stockout_logs(
+                args.project, args.days, args.max_entries
+            )
+        except ValueError as exc:
+            raise InputError(str(exc)) from exc
+        print(json.dumps(entries, indent=2), file=stdout)
+        return EXIT_OK
+
+    if args.command == "fetch-capacity":
+        region = args.region or region_of(args.zone)
+        if not region:
+            raise InputError("give --region, or --zone values that are all in one region")
+        try:
+            body = build_capacity_request(
+                args.machine_type, args.count, args.zone, args.target_shape
+            )
+        except ValueError as exc:
+            raise InputError(str(exc)) from exc
+        response = (client or LiveClient()).fetch_capacity_advice(args.project, region, body)
+        print(json.dumps(response, indent=2), file=stdout)
+        return EXIT_OK
+
     if args.command == "stockouts":
         entries = _load_logs(args.file, stdin)
         groups = summarize(find_stockouts(entries))
@@ -199,13 +264,14 @@ def main(
     stdin: TextIO | None = None,
     stdout: TextIO | None = None,
     stderr: TextIO | None = None,
+    client: LiveClient | None = None,
 ) -> int:
     stdin = stdin or sys.stdin
     stdout = stdout or sys.stdout
     stderr = stderr or sys.stderr
     args = build_parser().parse_args(argv)
     try:
-        return _run(args, stdin, stdout)
-    except InputError as exc:
+        return _run(args, stdin, stdout, client)
+    except (InputError, LiveError) as exc:
         print(f"error: {exc}", file=stderr)
         return EXIT_USAGE
