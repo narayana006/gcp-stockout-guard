@@ -9,15 +9,17 @@ Two response shapes are understood:
   from the caller's spec key to a recommended zone and time window, plus the
   zones that were considered and not recommended.
 
-Nothing here calls Google Cloud. You save a response to a file yourself and
-this module analyses it. Field names follow the public REST reference; fields
+Nothing here calls Google Cloud. This module parses saved responses and builds
+request bodies; ``live`` sends them. Field names follow the public REST reference; fields
 this module does not know are ignored.
 """
 
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 from .stockouts import parse_timestamp
@@ -212,6 +214,100 @@ def build_capacity_request(
     if distribution:
         body["distributionPolicy"] = distribution
     return body
+
+
+_DURATION_UNITS = {"d": 86400, "h": 3600, "m": 60, "s": 1}
+
+
+def parse_duration_arg(value: str) -> int:
+    """``7d``, ``36h``, ``90m`` or ``3600s`` -> seconds; a bare number is hours."""
+    text = value.strip().lower()
+    unit = text[-1:] if text[-1:] in _DURATION_UNITS else "h"
+    number = text[:-1] if text[-1:] in _DURATION_UNITS else text
+    try:
+        amount = float(number)
+    except ValueError:
+        raise ValueError(f"cannot read duration {value!r}; use e.g. 7d, 36h or 90m") from None
+    if not math.isfinite(amount):
+        raise ValueError(f"cannot read duration {value!r}; use e.g. 7d, 36h or 90m")
+    seconds = int(round(amount * _DURATION_UNITS[unit]))
+    if seconds < 1:
+        raise ValueError(f"duration {value!r} must be greater than 0")
+    return seconds
+
+
+def parse_time_arg(value: str) -> datetime:
+    """``2026-12-01`` or ``2026-12-01T09:00`` (UTC unless an offset is given)."""
+    text = value.strip()
+    if text.endswith(("Z", "z")):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        raise ValueError(
+            f"cannot read time {value!r}; use e.g. 2026-12-01 or 2026-12-01T09:00"
+        ) from None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _rfc3339(moment: datetime) -> str:
+    return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def build_calendar_request(
+    machine_type: str,
+    count: int,
+    start_not_earlier_than: datetime,
+    min_duration_seconds: int,
+    start_not_later_than: datetime | None = None,
+    max_duration_seconds: int | None = None,
+    allow_zones: list[str] | None = None,
+    deny_zones: list[str] | None = None,
+    spec: str = "request-1",
+) -> dict[str, Any]:
+    """Build the JSON body for ``advice.calendarMode`` (one spec, one machine type).
+
+    Field names follow ``CalendarModeAdviceRequest`` in the Compute Engine v1
+    discovery document. The method only returns advice; it reserves nothing.
+    """
+    if not machine_type:
+        raise ValueError("a machine type is required")
+    if count < 1:
+        raise ValueError("count must be at least 1")
+    if not spec:
+        raise ValueError("the spec name must not be empty")
+    latest = start_not_later_than or start_not_earlier_than
+    if latest < start_not_earlier_than:
+        raise ValueError("the latest start time is before the earliest start time")
+    if min_duration_seconds < 1:
+        raise ValueError("the minimum duration must be greater than 0")
+    longest = max_duration_seconds or min_duration_seconds
+    if longest < min_duration_seconds:
+        raise ValueError("the maximum duration is shorter than the minimum duration")
+    allow = [short_zone(z) for z in allow_zones or []]
+    deny = [short_zone(z) for z in deny_zones or []]
+    clash = sorted(set(allow) & set(deny))
+    if clash:
+        raise ValueError(f"zone(s) both allowed and excluded: {', '.join(clash)}")
+
+    resource_spec: dict[str, Any] = {
+        "targetResources": {
+            "specificSkuResources": {"machineType": machine_type, "instanceCount": str(count)}
+        },
+        "timeRangeSpec": {
+            "startTimeNotEarlierThan": _rfc3339(start_not_earlier_than),
+            "startTimeNotLaterThan": _rfc3339(latest),
+            "minDuration": f"{min_duration_seconds}s",
+            "maxDuration": f"{longest}s",
+        },
+    }
+    locations = {f"zones/{z}": {"preference": "ALLOW"} for z in allow}
+    locations.update({f"zones/{z}": {"preference": "DENY"} for z in deny})
+    if locations:
+        resource_spec["locationPolicy"] = {"locations": locations}
+    return {"futureResourcesSpecs": {spec: resource_spec}}
 
 
 def format_uptime(seconds: float | None) -> str:

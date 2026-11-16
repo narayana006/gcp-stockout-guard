@@ -1,11 +1,13 @@
-"""Read-only live calls to Cloud Logging and Compute Engine's advice.capacity.
+"""Read-only live calls to Cloud Logging and Compute Engine's capacity advice.
 
-Only two endpoints are called, and neither creates, changes or buys anything:
+Only three endpoints are called, and none creates, changes or buys anything:
 
 * ``POST https://logging.googleapis.com/v2/entries:list`` to read stockout
   errors from a project's logs.
 * ``POST https://compute.googleapis.com/compute/beta/projects/P/regions/R/advice/capacity``
   to ask for Spot VM capacity advice (beta).
+* ``POST https://compute.googleapis.com/compute/v1/projects/P/regions/R/advice/calendarMode``
+  to ask where and when a future reservation is likely to be approved.
 
 The access token comes from ``GOOGLE_OAUTH_ACCESS_TOKEN`` if it is set,
 otherwise from ``gcloud auth print-access-token``. The HTTP transport and token
@@ -29,6 +31,10 @@ LOGGING_URL = "https://logging.googleapis.com/v2/entries:list"
 CAPACITY_URL = (
     "https://compute.googleapis.com/compute/beta/projects/{project}/regions/{region}"
     "/advice/capacity"
+)
+CALENDAR_URL = (
+    "https://compute.googleapis.com/compute/v1/projects/{project}/regions/{region}"
+    "/advice/calendarMode"
 )
 TOKEN_ENV = "GOOGLE_OAUTH_ACCESS_TOKEN"
 PAGE_SIZE = 1000
@@ -140,6 +146,13 @@ class LiveClient:
     ) -> dict[str, Any]:
         """Send an advice.capacity request body and return the response."""
         url = CAPACITY_URL.format(project=project, region=region)
+        return self._post(url, request_body)
+
+    def fetch_calendar_advice(
+        self, project: str, region: str, request_body: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Send an advice.calendarMode request body and return the response."""
+        url = CALENDAR_URL.format(project=project, region=region)
         return self._post(url, request_body)
 
 

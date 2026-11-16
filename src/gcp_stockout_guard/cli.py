@@ -9,7 +9,15 @@ from collections.abc import Sequence
 from typing import TextIO
 
 from . import __version__
-from .advice import Advice, AdviceFormatError, build_capacity_request, load_advice
+from .advice import (
+    Advice,
+    AdviceFormatError,
+    build_calendar_request,
+    build_capacity_request,
+    load_advice,
+    parse_duration_arg,
+    parse_time_arg,
+)
 from .live import LiveClient, LiveError, region_of
 from .plan import (
     advice_payload,
@@ -164,7 +172,64 @@ def build_parser() -> argparse.ArgumentParser:
     fetch_capacity.add_argument(
         "--target-shape", choices=("ANY", "ANY_SINGLE_ZONE", "BALANCED"), help="distribution shape"
     )
+
+    fetch_calendar = commands.add_parser(
+        "fetch-calendar",
+        help="call advice.calendarMode (read-only) and print the response",
+        description=(
+            "Ask advice.calendarMode where and when a future reservation for one machine "
+            "type is likely to be approved, and print the JSON response, ready for the "
+            "`advice` and `plan` commands. This returns advice only; it reserves nothing."
+        ),
+    )
+    fetch_calendar.add_argument("--project", required=True, help="project ID")
+    fetch_calendar.add_argument("--region", help="region; derived from --zone when omitted")
+    fetch_calendar.add_argument(
+        "--machine-type", required=True, help="machine type, e.g. a3-highgpu-8g"
+    )
+    fetch_calendar.add_argument(
+        "--count", type=int, required=True, metavar="N", help="number of VMs"
+    )
+    fetch_calendar.add_argument(
+        "--start", required=True, metavar="TIME",
+        help="earliest start, e.g. 2026-12-01 or 2026-12-01T09:00 (UTC unless an offset is given)",
+    )
+    fetch_calendar.add_argument(
+        "--latest-start", metavar="TIME", help="latest acceptable start (default: --start)"
+    )
+    fetch_calendar.add_argument(
+        "--duration", required=True, help="minimum run time, e.g. 7d, 36h or 90m"
+    )
+    fetch_calendar.add_argument(
+        "--max-duration", help="maximum run time (default: --duration)"
+    )
+    fetch_calendar.add_argument(
+        "--zone", action="append", default=[], help="allow this zone; repeat for several"
+    )
+    fetch_calendar.add_argument(
+        "--exclude-zone", action="append", default=[], help="never recommend this zone"
+    )
+    fetch_calendar.add_argument(
+        "--spec", default="request-1", help="name for this request in the response"
+    )
     return parser
+
+
+def _calendar_body(args: argparse.Namespace) -> dict:
+    try:
+        return build_calendar_request(
+            args.machine_type,
+            args.count,
+            parse_time_arg(args.start),
+            parse_duration_arg(args.duration),
+            parse_time_arg(args.latest_start) if args.latest_start else None,
+            parse_duration_arg(args.max_duration) if args.max_duration else None,
+            args.zone,
+            args.exclude_zone,
+            args.spec,
+        )
+    except ValueError as exc:
+        raise InputError(str(exc)) from exc
 
 
 def _read(path: str, stdin: TextIO) -> str:
@@ -220,6 +285,15 @@ def _run(
         except ValueError as exc:
             raise InputError(str(exc)) from exc
         response = (client or LiveClient()).fetch_capacity_advice(args.project, region, body)
+        print(json.dumps(response, indent=2), file=stdout)
+        return EXIT_OK
+
+    if args.command == "fetch-calendar":
+        body = _calendar_body(args)
+        region = args.region or region_of(args.zone + args.exclude_zone)
+        if not region:
+            raise InputError("give --region, or --zone values that are all in one region")
+        response = (client or LiveClient()).fetch_calendar_advice(args.project, region, body)
         print(json.dumps(response, indent=2), file=stdout)
         return EXIT_OK
 

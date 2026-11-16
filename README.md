@@ -2,7 +2,7 @@
 
 Find out which Google Cloud zones and machine types are running out of capacity, from the stockout errors already sitting in your Compute Engine logs, and get a ranked list of zones to fall back to.
 
-> **Status: early.** Six commands work today. Four analyse files: `stockouts` (count `ZONE_RESOURCE_POOL_EXHAUSTED` errors per zone and machine type), `advice` (summarise saved `advice.capacity` and `advice.calendarMode` responses), `plan` (rank fallback zones and print a fallback plan, with any reservation shown as a dry-run command) and `capacity-request` (print an `advice.capacity` request body). Two make **read-only** calls to Google Cloud: `fetch-logs` (stockout errors from Cloud Logging) and `fetch-capacity` (Spot advice from `advice.capacity`). The tool **never creates, changes or buys anything, and never creates a reservation**. A live `advice.calendarMode` call, reservation automation and alerting are not built; see [Roadmap](#roadmap).
+> **Status: early.** Seven commands work today. Four analyse files: `stockouts` (count `ZONE_RESOURCE_POOL_EXHAUSTED` errors per zone and machine type), `advice` (summarise saved `advice.capacity` and `advice.calendarMode` responses), `plan` (rank fallback zones and print a fallback plan, with any reservation shown as a dry-run command) and `capacity-request` (print an `advice.capacity` request body). Three make **read-only** calls to Google Cloud: `fetch-logs` (stockout errors from Cloud Logging), `fetch-capacity` (Spot advice from `advice.capacity`) and `fetch-calendar` (future-reservation advice from `advice.calendarMode`). The tool **never creates, changes or buys anything, and never creates a reservation**. Reservation automation and alerting are not built; see [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -192,27 +192,36 @@ This prints the body and sends nothing. The method is `POST https://compute.goog
 ```
 gcp-stockout-guard fetch-logs --project ID [--days N] [--max-entries N]
 gcp-stockout-guard fetch-capacity --project ID [--region REGION] --machine-type TYPE [--machine-type TYPE ...] --count N [--zone ZONE ...] [--target-shape ANY|ANY_SINGLE_ZONE|BALANCED]
+gcp-stockout-guard fetch-calendar --project ID [--region REGION] --machine-type TYPE --count N --start TIME [--latest-start TIME] --duration D [--max-duration D] [--zone ZONE ...] [--exclude-zone ZONE ...] [--spec NAME]
 ```
 
-Both print the raw JSON so you can pipe it on or save it:
+All three print the raw JSON so you can pipe it on or save it:
 
 ```bash
 gcp-stockout-guard fetch-logs --project my-project --days 3 > stockouts.json
 gcp-stockout-guard fetch-capacity --project my-project --machine-type n2-standard-8 --count 20 --zone us-central1-c > advice-c.json
 gcp-stockout-guard plan --logs stockouts.json --advice advice-c.json --count 20
+
+# Where could 8 a2-highgpu-1g VMs run for 7 days, starting between 1 and 5 December?
+gcp-stockout-guard fetch-calendar --project my-project --machine-type a2-highgpu-1g --count 8 \
+  --start 2026-12-01T09:00 --latest-start 2026-12-05 --duration 7d \
+  --zone europe-west4-a --zone europe-west4-b --spec gpu-training > calendar.json
+gcp-stockout-guard advice calendar.json
 ```
 
 | Command | Call made | Permission needed |
 | --- | --- | --- |
 | `fetch-logs` | `POST https://logging.googleapis.com/v2/entries:list`, newest first, following pages up to `--max-entries` (default 5000) | `logging.logEntries.list` (for example Logs Viewer) |
 | `fetch-capacity` | `POST https://compute.googleapis.com/compute/beta/projects/ID/regions/REGION/advice/capacity` with the same body `capacity-request` prints | `compute.advice.capacity` |
+| `fetch-calendar` | `POST https://compute.googleapis.com/compute/v1/projects/ID/regions/REGION/advice/calendarMode` with one `futureResourcesSpecs` entry | see Google's Compute Engine IAM reference; not checked against a live project |
 
 - **Logs filter.** `fetch-logs` asks for entries containing `"ZONE_RESOURCE_POOL_EXHAUSTED"` or "does not have enough resources available to fulfill the request" with a timestamp in the last `--days` days (default 7).
-- **Region.** `fetch-capacity` uses `--region`, or works it out from `--zone` when all zones are in one region; otherwise it stops with an error.
+- **Region.** `fetch-capacity` and `fetch-calendar` use `--region`, or work it out from `--zone` (and `--exclude-zone`) when all zones are in one region; otherwise they stop with an error.
+- **Calendar-mode request.** `fetch-calendar` asks about one machine type (`specificSkuResources`, not TPU `aggregateResources`). `--start` and `--latest-start` set `startTimeNotEarlierThan` and `startTimeNotLaterThan` (dates or times, UTC unless you give an offset; the latest start defaults to `--start`). `--duration` and `--max-duration` set `minDuration` and `maxDuration` and accept `7d`, `36h`, `90m`, `3600s` or a bare number of hours; the maximum defaults to the minimum. `--zone` marks a zone `ALLOW` and `--exclude-zone` marks it `DENY` in `locationPolicy`. `--spec` names the request; the response is keyed by that name, and `advice` shows it. `deploymentType` is not sent, so Google's default (`DENSE`) applies. Bad input is rejected before anything is sent.
 - **Credentials.** The access token comes from the `GOOGLE_OAUTH_ACCESS_TOKEN` environment variable if set, otherwise from `gcloud auth print-access-token`. Nothing is stored.
 - **Errors.** An HTTP error is shown with Google's message (for example `HTTP 403: Permission denied`) and exit status 2.
 
-Both calls only read: `entries:list` reads logs and `advice.capacity` returns advice without reserving anything. They are tested against a fake transport, not recorded from a live project, so please open an issue if a real response is handled wrongly.
+All three calls only read: `entries:list` reads logs, and `advice.capacity` and `advice.calendarMode` return advice without reserving anything. They are tested against a fake transport, not recorded from a live project. The `advice.calendarMode` request body follows `CalendarModeAdviceRequest` in Google's Compute Engine v1 discovery document; please open an issue if a real request or response is handled wrongly.
 
 ## What Google's APIs can and cannot tell you
 
@@ -224,7 +233,7 @@ That is why the plan treats Spot obtainability as one hint among others. A high 
 
 ## Limitations
 
-- Live fetching covers Cloud Logging and `advice.capacity` only. For `advice.calendarMode` you still send the request yourself and save the response.
+- `fetch-calendar` sends one spec for one machine type per call. TPU requests (`aggregateResources`), local SSD partitions and several specs in one request are not supported; build those bodies yourself and save the response for `advice`.
 - Stockout detection is after the fact. It tells you where stockouts have already happened.
 - The advice files in `examples/` are **illustrative**: written by hand from the field names in Google's public REST reference, not recorded from a real project. The parser has not been run against live responses, and `advice.capacity` is a beta method whose shape may change. The log parser is likewise tested against sample entries modelled on Compute Engine audit logs. If something of yours is parsed wrongly or shows up as `unknown`, please open an issue with a redacted copy.
 - The ranking only knows zones that appear in your logs or advice files. A zone nobody mentioned is not ranked, however much capacity it has.
@@ -241,7 +250,7 @@ Unticked items are not built yet.
 - [x] Stockout report: which machine types and zones are at risk, with ranked zones to move to (`plan`)
 - [x] Reservation step printed as a dry-run command only
 - [x] Live, read-only calls to Cloud Logging (`fetch-logs`) and `advice.capacity` (`fetch-capacity`), so logs and Spot advice no longer have to be exported by hand
-- [ ] Live call to `advice.calendarMode`
+- [x] Live, read-only call to `advice.calendarMode` (`fetch-calendar`) for one machine type and time window
 - [ ] Reservation plan: compares running VMs and autoscaler maximums with existing reservations and lists the gaps
 - [ ] Reservation automation from a YAML policy: creates on-demand reservations and calendar-mode future reservation requests, dry-run by default, real purchases behind an explicit flag and a spend limit you set
 - [ ] Flags unused and DEGRADED reservations so you stop paying for capacity you cannot use
