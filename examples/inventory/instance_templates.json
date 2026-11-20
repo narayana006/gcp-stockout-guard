@@ -1,0 +1,17 @@
+[
+  {
+    "name": "web-n2",
+    "properties": {
+      "machineType": "n2-standard-8",
+      "scheduling": {
+        "provisioningModel": "STANDARD"
+      }
+    }
+  },
+  {
+    "name": "api-n2",
+    "properties": {
+      "machineType": "n2-standard-8"
+    }
+  }
+]

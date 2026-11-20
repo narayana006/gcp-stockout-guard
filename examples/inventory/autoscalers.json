@@ -1,0 +1,12 @@
+[
+  {
+    "name": "web-autoscaler",
+    "target": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/instanceGroupManagers/web",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "autoscalingPolicy": {
+      "mode": "ON",
+      "minNumReplicas": 3,
+      "maxNumReplicas": 12
+    }
+  }
+]

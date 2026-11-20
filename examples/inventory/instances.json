@@ -1,0 +1,172 @@
+[
+  {
+    "name": "db-1",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  },
+  {
+    "name": "db-2",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  },
+  {
+    "name": "db-3",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  },
+  {
+    "name": "db-4",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  },
+  {
+    "name": "web-a",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    },
+    "metadata": {
+      "items": [
+        {
+          "key": "created-by",
+          "value": "projects/123456789012/zones/us-central1-a/instanceGroupManagers/web"
+        }
+      ]
+    }
+  },
+  {
+    "name": "web-b",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    },
+    "metadata": {
+      "items": [
+        {
+          "key": "created-by",
+          "value": "projects/123456789012/zones/us-central1-a/instanceGroupManagers/web"
+        }
+      ]
+    }
+  },
+  {
+    "name": "web-c",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    },
+    "metadata": {
+      "items": [
+        {
+          "key": "created-by",
+          "value": "projects/123456789012/zones/us-central1-a/instanceGroupManagers/web"
+        }
+      ]
+    }
+  },
+  {
+    "name": "api-b1",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-b",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-b/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    },
+    "metadata": {
+      "items": [
+        {
+          "key": "created-by",
+          "value": "projects/123456789012/regions/us-central1/instanceGroupManagers/api"
+        }
+      ]
+    }
+  },
+  {
+    "name": "api-c1",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-c",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-c/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    },
+    "metadata": {
+      "items": [
+        {
+          "key": "created-by",
+          "value": "projects/123456789012/regions/us-central1/instanceGroupManagers/api"
+        }
+      ]
+    }
+  },
+  {
+    "name": "trainer-1",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/europe-west4-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/europe-west4-a/machineTypes/a2-highgpu-1g",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  },
+  {
+    "name": "trainer-2",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/europe-west4-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/europe-west4-a/machineTypes/a2-highgpu-1g",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  },
+  {
+    "name": "render-spot-1",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "RUNNING",
+    "scheduling": {
+      "provisioningModel": "SPOT",
+      "preemptible": true
+    }
+  },
+  {
+    "name": "old-db",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "machineType": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/machineTypes/n2-standard-8",
+    "status": "TERMINATED",
+    "scheduling": {
+      "provisioningModel": "STANDARD",
+      "preemptible": false
+    }
+  }
+]

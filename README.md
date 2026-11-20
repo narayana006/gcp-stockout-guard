@@ -2,7 +2,7 @@
 
 Find out which Google Cloud zones and machine types are running out of capacity, from the stockout errors already sitting in your Compute Engine logs, and get a ranked list of zones to fall back to.
 
-> **Status: early.** Seven commands work today. Four analyse files: `stockouts` (count `ZONE_RESOURCE_POOL_EXHAUSTED` errors per zone and machine type), `advice` (summarise saved `advice.capacity` and `advice.calendarMode` responses), `plan` (rank fallback zones and print a fallback plan, with any reservation shown as a dry-run command) and `capacity-request` (print an `advice.capacity` request body). Three make **read-only** calls to Google Cloud: `fetch-logs` (stockout errors from Cloud Logging), `fetch-capacity` (Spot advice from `advice.capacity`) and `fetch-calendar` (future-reservation advice from `advice.calendarMode`). The tool **never creates, changes or buys anything, and never creates a reservation**. Reservation automation and alerting are not built; see [Roadmap](#roadmap).
+> **Status: early.** Eight commands work today. Five analyse files: `stockouts` (count `ZONE_RESOURCE_POOL_EXHAUSTED` errors per zone and machine type), `advice` (summarise saved `advice.capacity` and `advice.calendarMode` responses), `plan` (rank fallback zones and print a fallback plan, with any reservation shown as a dry-run command), `reservation-gaps` (compare running VMs and managed group maximums with existing reservations) and `capacity-request` (print an `advice.capacity` request body). Three make **read-only** calls to Google Cloud: `fetch-logs` (stockout errors from Cloud Logging), `fetch-capacity` (Spot advice from `advice.capacity`) and `fetch-calendar` (future-reservation advice from `advice.calendarMode`). The tool **never creates, changes or buys anything, and never creates a reservation**. Reservation automation and alerting are not built; see [Roadmap](#roadmap).
 
 ## Quick start
 
@@ -147,6 +147,49 @@ Zones with a score of zero or less are left out, ties go to the zone name, and w
 
 Calendar-mode advice is listed under the plan but does not affect the ranking: the response names your spec key, not a machine type, so it cannot be matched to a log entry reliably.
 
+### `reservation-gaps`: is what you run covered by reservations?
+
+```
+gcp-stockout-guard reservation-gaps --instances FILE --reservations FILE [--groups FILE --templates FILE] [--autoscalers FILE] [--format text|json] [--fail-on-gap]
+```
+
+Save your inventory with `gcloud` (read-only list calls) and compare it:
+
+```bash
+gcloud compute instances list --format=json > instances.json
+gcloud compute reservations list --format=json > reservations.json
+gcloud compute instance-groups managed list --format=json > groups.json
+gcloud compute instance-templates list --format=json > templates.json
+gcloud compute autoscalers list --format=json > autoscalers.json
+gcp-stockout-guard reservation-gaps --instances instances.json --reservations reservations.json \
+  --groups groups.json --templates templates.json --autoscalers autoscalers.json
+```
+
+With the invented files in [`examples/inventory`](examples/inventory):
+
+```
+3 of 4 zone and machine type pair(s) need more reserved VMs (14 VM(s) in total)
+
+ZONE            MACHINE TYPE   RUNNING  GROUP MAX  NEEDED  RESERVED  IN USE  GAP
+us-central1-a   n2-standard-8  7        12         16      10        7       short 6
+us-central1-b   n2-standard-8  1        4          4       0         0       short 4
+us-central1-c   n2-standard-8  1        4          4       0         0       short 4
+europe-west4-a  a2-highgpu-1g  2        0          2       4         2       spare 2
+
+Not counted:
+  group batch: template batch-old not found in --templates
+```
+
+For each zone and machine type:
+
+- **RUNNING** counts on-demand VMs in `PROVISIONING`, `STAGING`, `RUNNING` or `REPAIRING` state. Spot and preemptible VMs are skipped, because they cannot use reservations.
+- **GROUP MAX** is what the managed instance groups in `--groups` may scale to in that zone: the autoscaler's `maxNumReplicas` (from the group's `autoscaler` field or a matching entry in `--autoscalers`), or the group's `targetSize` when it has no autoscaler or the autoscaler is `OFF`. A regional group's maximum is split evenly across its zones, rounded up. Each group's machine type comes from its instance template, so `--groups` needs `--templates`; a group whose template is missing is listed under "Not counted", and groups built from Spot templates are skipped.
+- **NEEDED** is the larger of RUNNING and (VMs not created by a listed group + GROUP MAX). A VM belongs to a group when its `created-by` metadata names that group.
+- **RESERVED** and **IN USE** add up `specificReservation.count` and `inUseCount` over reservations with status `READY`. Reservations still being created or deleted are ignored.
+- **GAP** is `short N` when NEEDED exceeds RESERVED, `spare N` when reservations exceed NEEDED, otherwise `ok`.
+
+`--fail-on-gap` exits with status 1 when any pair is short, for cron or CI. The command reads files only; it does not create reservations or print a command to do so. Not handled yet: reservations shared from other projects, `specificReservationRequired` (VMs that do not target such a reservation by name will not actually use it), GPUs or local SSDs attached outside the machine type, and regional groups whose instances are spread unevenly.
+
 ### `capacity-request`: print an `advice.capacity` request body
 
 ```
@@ -251,7 +294,7 @@ Unticked items are not built yet.
 - [x] Reservation step printed as a dry-run command only
 - [x] Live, read-only calls to Cloud Logging (`fetch-logs`) and `advice.capacity` (`fetch-capacity`), so logs and Spot advice no longer have to be exported by hand
 - [x] Live, read-only call to `advice.calendarMode` (`fetch-calendar`) for one machine type and time window
-- [ ] Reservation plan: compares running VMs and autoscaler maximums with existing reservations and lists the gaps
+- [x] Reservation plan: compares running VMs and autoscaler maximums with existing reservations and lists the gaps (`reservation-gaps`, from saved `gcloud` list output)
 - [ ] Reservation automation from a YAML policy: creates on-demand reservations and calendar-mode future reservation requests, dry-run by default, real purchases behind an explicit flag and a spend limit you set
 - [ ] Flags unused and DEGRADED reservations so you stop paying for capacity you cannot use
 - [ ] Slack or webhook alerts when a score drops below your threshold

@@ -26,6 +26,13 @@ from .plan import (
     render_plan_json,
     render_plan_text,
 )
+from .reservations import (
+    InventoryFormatError,
+    find_gaps,
+    load_list,
+    render_gaps_json,
+    render_gaps_text,
+)
 from .stockouts import (
     LogFormatError,
     find_stockouts,
@@ -36,7 +43,7 @@ from .stockouts import (
 )
 
 EXIT_OK = 0
-EXIT_STOCKOUTS = 1
+EXIT_STOCKOUTS = 1  # also: reservation gaps found with --fail-on-gap
 EXIT_USAGE = 2
 
 
@@ -118,6 +125,40 @@ def build_parser() -> argparse.ArgumentParser:
     )
     plan.add_argument("--project", help="project ID to put in the printed reservation command")
     plan.add_argument("--format", choices=("text", "json"), default="text", help="output format")
+
+    gaps = commands.add_parser(
+        "reservation-gaps",
+        help="compare running VMs and managed group maximums with existing reservations",
+        description=(
+            "Read saved `gcloud compute ... list --format=json` output and list, per zone and "
+            "machine type, how many on-demand VMs you run or may scale to and how many are "
+            "covered by READY reservations. Reads files only; reserves nothing."
+        ),
+    )
+    gaps.add_argument(
+        "--instances", required=True, metavar="FILE",
+        help="output of `gcloud compute instances list --format=json`, or - for stdin",
+    )
+    gaps.add_argument(
+        "--reservations", required=True, metavar="FILE",
+        help="output of `gcloud compute reservations list --format=json`",
+    )
+    gaps.add_argument(
+        "--groups", metavar="FILE",
+        help="output of `gcloud compute instance-groups managed list --format=json`",
+    )
+    gaps.add_argument(
+        "--templates", metavar="FILE",
+        help="output of `gcloud compute instance-templates list --format=json` (with --groups)",
+    )
+    gaps.add_argument(
+        "--autoscalers", metavar="FILE",
+        help="output of `gcloud compute autoscalers list --format=json` (optional)",
+    )
+    gaps.add_argument("--format", choices=("text", "json"), default="text", help="output format")
+    gaps.add_argument(
+        "--fail-on-gap", action="store_true", help="exit with status 1 when any gap is found"
+    )
 
     request = commands.add_parser(
         "capacity-request",
@@ -261,6 +302,15 @@ def _load_advice(paths: Sequence[str], stdin: TextIO) -> Advice:
     return merged
 
 
+def _load_list(path: str | None, what: str, stdin: TextIO) -> list:
+    if path is None:
+        return []
+    try:
+        return load_list(_read(path, stdin), f"{what} ({path})")
+    except InventoryFormatError as exc:
+        raise InputError(str(exc)) from exc
+
+
 def _run(
     args: argparse.Namespace, stdin: TextIO, stdout: TextIO, client: LiveClient | None
 ) -> int:
@@ -311,6 +361,21 @@ def _run(
         else:
             print(render_advice_text(advice), file=stdout)
         return EXIT_OK
+
+    if args.command == "reservation-gaps":
+        if args.groups and not args.templates:
+            raise InputError("--groups needs --templates to know each group's machine type")
+        gaps, notes = find_gaps(
+            _load_list(args.instances, "instances", stdin),
+            _load_list(args.reservations, "reservations", stdin),
+            _load_list(args.groups, "groups", stdin),
+            _load_list(args.templates, "templates", stdin),
+            _load_list(args.autoscalers, "autoscalers", stdin),
+        )
+        render = render_gaps_json if args.format == "json" else render_gaps_text
+        print(render(gaps, notes), file=stdout)
+        short = any(g.shortfall for g in gaps)
+        return EXIT_STOCKOUTS if short and args.fail_on_gap else EXIT_OK
 
     if args.command == "plan":
         if args.count is not None and args.count < 1:

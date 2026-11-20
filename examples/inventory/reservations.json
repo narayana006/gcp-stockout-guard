@@ -1,0 +1,41 @@
+[
+  {
+    "name": "core-n2",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "status": "READY",
+    "specificReservationRequired": false,
+    "specificReservation": {
+      "count": "10",
+      "inUseCount": "7",
+      "instanceProperties": {
+        "machineType": "n2-standard-8"
+      }
+    }
+  },
+  {
+    "name": "gpu-train",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/europe-west4-a",
+    "status": "READY",
+    "specificReservationRequired": false,
+    "specificReservation": {
+      "count": "4",
+      "inUseCount": "2",
+      "instanceProperties": {
+        "machineType": "a2-highgpu-1g"
+      }
+    }
+  },
+  {
+    "name": "new-n2-b",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-b",
+    "status": "CREATING",
+    "specificReservationRequired": false,
+    "specificReservation": {
+      "count": "4",
+      "inUseCount": "0",
+      "instanceProperties": {
+        "machineType": "n2-standard-8"
+      }
+    }
+  }
+]

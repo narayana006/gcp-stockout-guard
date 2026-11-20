@@ -23,3 +23,4 @@ jobs:
       - run: ruff check .
       - run: pytest
       - run: gcp-stockout-guard plan --logs examples/stockout_logs.json --advice examples/advice_capacity_us-central1.json --advice examples/advice_calendar_europe-west4.json --count 20
+      - run: gcp-stockout-guard reservation-gaps --instances examples/inventory/instances.json --reservations examples/inventory/reservations.json --groups examples/inventory/instance_groups.json --templates examples/inventory/instance_templates.json --autoscalers examples/inventory/autoscalers.json

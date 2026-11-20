@@ -1,0 +1,40 @@
+[
+  {
+    "name": "web",
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a/instanceGroupManagers/web",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-a",
+    "instanceTemplate": "https://www.googleapis.com/compute/v1/projects/example-project/global/instanceTemplates/web-n2",
+    "targetSize": 3
+  },
+  {
+    "name": "api",
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/example-project/regions/us-central1/instanceGroupManagers/api",
+    "region": "https://www.googleapis.com/compute/v1/projects/example-project/regions/us-central1",
+    "instanceTemplate": "https://www.googleapis.com/compute/v1/projects/example-project/global/instanceTemplates/api-n2",
+    "targetSize": 2,
+    "distributionPolicy": {
+      "zones": [
+        {
+          "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-b"
+        },
+        {
+          "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-c"
+        }
+      ]
+    },
+    "autoscaler": {
+      "autoscalingPolicy": {
+        "mode": "ON",
+        "minNumReplicas": 2,
+        "maxNumReplicas": 8
+      }
+    }
+  },
+  {
+    "name": "batch",
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-f/instanceGroupManagers/batch",
+    "zone": "https://www.googleapis.com/compute/v1/projects/example-project/zones/us-central1-f",
+    "instanceTemplate": "https://www.googleapis.com/compute/v1/projects/example-project/global/instanceTemplates/batch-old",
+    "targetSize": 0
+  }
+]
